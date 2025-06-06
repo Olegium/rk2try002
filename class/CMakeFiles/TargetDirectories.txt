@@ -1,0 +1,3 @@
+/home/oleg/rk2try002/rk2try002/class/CMakeFiles/class.dir
+/home/oleg/rk2try002/rk2try002/class/CMakeFiles/edit_cache.dir
+/home/oleg/rk2try002/rk2try002/class/CMakeFiles/rebuild_cache.dir
