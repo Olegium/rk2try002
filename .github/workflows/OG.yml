@@ -1,0 +1,72 @@
+name: RK
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+
+  BUILD_TYPE: Release
+
+jobs:
+  job:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        
+    - name: Install dependencies
+      run: |
+        sudo apt-get -qq update
+        sudo apt-get install -y \
+          cmake \
+          build-essential \
+          dpkg-dev
+        
+    - name: Configure CMake
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build
+      run: cmake --build build --config Release --parallel $(nproc)
+
+    - name: Test
+      run: |
+        cd build/test && ctest --output-on-failure && ${{github.workspace}}/build/test/test
+
+    - name: Create DEB package
+      working-directory: ${{github.workspace}}/build
+      run: cpack -G DEB
+     
+    - name: Upload DEB artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ubuntu-latest-deb-pack
+        path: build/*.deb
+    
+  create_release:
+      needs: job
+      runs-on: ubuntu-latest
+      permissions:
+        contents: write 
+
+      steps:
+      - uses: actions/checkout@v4
+
+      - name: download_ubuntu_deb
+        uses: actions/download-artifact@v4
+        with:
+          name: ubuntu-latest-deb-pack
+          path: artifacts/linux
+          
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.${{ github.run_number }}
+          name: Release v1.${{ github.run_number }}
+          files: |
+            artifacts/linux/*.deb 
+      
